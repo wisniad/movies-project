@@ -1,58 +1,143 @@
-<template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank">awesome-vue</a></li>
-    </ul>
-  </div>
+  <template>  
+ <b-container class="container"> 
+  <b-row class="search-wrapper" :gutter="10">
+    
+    <b-col>
+      <b-input placeholder="Filter by Name" icon="search" v-model="filter"></b-input>
+      <b-button @click="reset">Reset</b-button>
+    </b-col>
+      
+    <b-col class="col-space"> &nbsp; </b-col>
+     
+    <b-col>
+      <b-select v-model="sort" placeholder="Sort by">
+        <option
+          v-for="(item, index) in options"
+          :label="item.label"
+          :value="item.field"
+          :key="index">
+        </option>
+      </b-select>
+    </b-col>
+      
+  </b-row> <!-- search wrapper -->
+    
+  <b-row>
+  <table>
+    <thead>
+      <tr>
+        <th v-for="(option, index) in options" :key="index"> {{ option.label }} </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(movie, index) in getMovies" :key="index">
+        <th> {{ movie.name ? movie.name : "Information missing"  }} </th>
+        <th> {{ movie.year ? movie.year : "Information missing" }} </th>
+        <th> {{ movie.genre  ? movie.genre : "Information missing"}} </th>
+        <th> {{ movie.duration  ? movie.duration : "Information missing"}} </th>
+        <th> {{ movie.rating  ? movie.rating : "Information missing"}} </th>
+        <th> {{ movie.votes  ? movie.votes : "Information missing"}} </th>
+      </tr>
+    </tbody>
+  </table>
+  <b-col v-if="getMovies.length === 0">
+    <div class="box box__empty"> No Match Found</div>
+  </b-col>
+    
+
+    
+
+  </b-row> <!-- results -->
+    
+ </b-container>
+
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'HelloWorld',
-  props: {
-    msg: String
+  data: function() {
+    return { 
+      filter: '',
+      sort: '',
+      options: [],
+      movies: []
+    }
+  },
+  mounted () {
+      axios.get(`https://api.myjson.com/bins/1tll6`)
+        .then((movies) => { 
+          movies.data.values.map(movie => {
+            this.movies.push(movie)
+          })
+          movies.data.fields.map( field => {
+            this.options.push(field)
+          })
+        })  
+        .catch(e => {
+          this.errors.push(e)
+        })
+  },
+  methods: {
+    reset () {
+      this.filter = ""
+    }
+  },
+  computed: {
+    getMovies() {
+      let movies = this.movies.filter((movie) => {
+          return movie.name.toLowerCase().includes(this.filter.toLowerCase());
+        }); 
+      
+      if (this.sort == 'votes') {
+        return movies.sort(function(a, b) {
+          return b.votes - a.votes
+        });
+      }
+      else if (this.sort == 'year') {
+        return movies.sort(function(a, b) {
+          return b.year - a.year
+        });
+      }
+      else if (this.sort == 'genre') {
+        return movies.sort(function (a, b) {
+          if (a.genre < b.genre) return -1;
+          else if (a.genre > b.genre) return 1;
+          return 0;
+        });
+      }
+      else if (this.sort == 'duration') {
+        return movies.sort(function(a, b) {
+          return b.duration - a.duration
+        });
+      }
+      else if (this.sort == 'name') {
+        return movies.sort(function (a, b) {
+          if (a.name < b.name) return -1;
+          else if (a.name > b.name) return 1;
+          return 0;
+    });
+      }
+      else if (this.sort == 'rating') {
+        return movies.sort(function(a, b) {
+          return b.rating - a.rating
+        });
+      } 
+      else {
+        return movies;
+      }
+      
+    }
   }
 }
+
+
+
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
+
 </style>
